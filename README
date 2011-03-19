@@ -1,10 +1,13 @@
 ###################################################################
-		eXp0stulate-0.1 README:
+		Xpostulate README
 ###################################################################
   
-eXp0stulate was created by Anthony Baldwin
+Xpostulate was created by Anthony Baldwin
 tony@baldwinsoftware.com
-http://www.baldwinsoftware.com
+who uses Xpostulate to post to:
+http://baldwinsoftware.com/blog
+http://tonybaldwin.wordpress.com/
+http://tonybaldwin.tumblr.com
 http://tonytraductor.livejournal.com
 http://tonybaldwin.insanejournal.com
 http://tonybaldwin.dreamwidth.rg
@@ -12,14 +15,13 @@ http://tonybaldwin.dreamwidth.rg
 ----
 DEPENDENCIES:
 
+Xpostulate only works if you have a blog
+Wordpress, Tumblr, Livejournal, InsaneJournal, Dreamwidth journal...etc.
 
-eXp0stulate requires TCL 
-and the tcl package http (should be part of any modern tcl distribution).
-Also, it only works if you have a Livejournal, InsaneJournal, or Dreamwidth journal...duh.
-
-
-Additionally eXp0stulate requires:
+Additionally Xpostulate requires:
 Tcl8.5
+and
+tcllib for http
 
 Get it here:
 http://www.activestate.com/store/productdetail.aspx?prdGuid=f0cd6399-fefb-466e-ba17-220dcd6f4078
@@ -31,55 +33,26 @@ You want 8.5.
 
 ----
 
-eXp0stulate should function on Linux, Mac OS and Windows, but, 
-the install script is written for Linux.
-I believe it will also work on Mac OS and BSD without issue.
-For Windows, you're kind of on your own for installation.
-I'm afraid I can offer you no support, since I don't use or develop for Windows.
-Good luck with that.
-Basically, you just have to have the script where it can be executable, and the
-xpost.conf file where it can be sourced...if that means anything to you.
-
-
-Installation for *nix/nux/osx is trivial:
-
-To install, cd to the dir where you've downloaded
-and extracted the tarball and do 
-su or sudo
-./install.sh
-
-Enter your username (not root) when the installation asks you for
-your name.
-
-This should move the tcltherapy.tcl script to
-/usr/local/bin/xpostul8, and properly change permissions,
-as well as create a .xpost directory in your home dir to save configs.  
-If you have difficulty, feel free to e-mail me.
-
-On gnome or kde, etc., you can make a desktop icon, or whatever you like.
-Just point it to the script.
-I made a little icon, but, maybe, if you're artistic,
-perhaps you could make a better one.
-Send it to me, if you do!
-If you're using openbox, fluxbox, awm, dwm, wmii (my fave!), xmonad, or some other such
-window manager, you're probably way smarter than any gnome or kde user and don't even 
-need to read instructions.
+Xpostulate should function on Linux, Mac OS and Windows, but, 
+Installers for lin and win are available from the main site.
+I believe it will also work on Mac OS and BSD without issue,
+but no installers have been built (install from sources).
 
 ----
-If you like eXp0stulate and want to drop me a line to say thanks,
+MANUAL
+
+There is a manual here: http://baldwinsoftware.com/wiki/pmwiki.php?n=Xpost.Manual
+There are user communities on LJ and DW
+
+----
+If you like Xpostulate and want to drop me a line to say thanks,
 go ahead and e-mail me at tony@baldwinsoftware.com
-Likewise, do the same if you have any questions about using eXp0stulate,
+Likewise, do the same if you have any questions about using Xpostulate,
 and/or suggestions for new features, or, you want to participate
 in the future development thereof.
 Of course, since it's all GPLed code, you could take what I've done
 and run with it, too, if you like, so long as you release your
 work under the GPL.
-
-This is a beta, and a work in progress.
-If you want a more fully featured LJ Client, perhaps you would prefer Logjam,
-or one of the other, many LJ clients available.
-Why did I write one when there are so many available?
-Because there wasn't one in tcl/tk...
 
 If you have complaints, call 1-800-YO-MOMS.
 
