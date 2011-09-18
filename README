@@ -1,6 +1,7 @@
 ###################################################################
 		Xpostulate README
 ###################################################################
+# version 0.2.1
   
 Xpostulate was created by Anthony Baldwin
 tony@baldwinsoftware.com
@@ -10,7 +11,8 @@ http://tonybaldwin.wordpress.com/
 http://tonybaldwin.tumblr.com
 http://tonytraductor.livejournal.com
 http://tonybaldwin.insanejournal.com
-http://tonybaldwin.dreamwidth.rg
+http://tonybaldwin.dreamwidth.org
+http://friendika.parlementum.net/profile/tonybaldwin
 
 ----
 DEPENDENCIES:
@@ -20,8 +22,9 @@ Wordpress, Tumblr, Livejournal, InsaneJournal, Dreamwidth journal...etc.
 
 Additionally Xpostulate requires:
 Tcl8.5
+Tk8.5
 and
-tcllib for http
+tcllib for http and base64
 
 Get it here:
 http://www.activestate.com/store/productdetail.aspx?prdGuid=f0cd6399-fefb-466e-ba17-220dcd6f4078
@@ -43,6 +46,18 @@ MANUAL
 
 There is a manual here: http://baldwinsoftware.com/wiki/pmwiki.php?n=Xpost.Manual
 There are user communities on LJ and DW
+
+# changelog for v 0.2.1
+# #############
+SUPPORT FOR FRIENDIKA POSTING WITH BBCODE INSERTIONS!!!
+Removed twitter (needs work...anybody want to help me with oauth?)
+Changed identi.ca to any status.net
+Removed iziblog, scribbld, and inksome...sorry...
+those sites have become a haven of SEO spam, anyway.
+If somebody wants this function back, contact me
+at tony@baldwinsoftware.com, and for a large fee, I will write
+you a custom spammy xpostulator.
+
 
 ----
 If you like Xpostulate and want to drop me a line to say thanks,

@@ -1,12 +1,13 @@
 #! /usr/bin/env wish8.5
 
 ##############################################
-# eXpostulate - crossposting blog client and social network dashboard
+# Xpostulate - crossposting blog client and social network dashboard
 # (c) tony baldwin / tony@baldwinsoftware.com / http://baldwinsoftware.com
 # released according to the terms of the Gnu Public License, v. 3 or later
 # further licensing details at the end of the code.
 
 package require http
+package require base64
 
 uplevel #0 [list source ~/.xpost/xpost.conf]
 
@@ -15,6 +16,12 @@ uplevel #0 [list source ~/.xpost/xpost.conf]
 # than using tonso global variables.
 # nonetheless, I'm about to name a whole herd of global variables:
 
+global tagsc
+global tube
+global tbname
+global tbpswd
+global wpname
+global wppswd
 global ljname
 global ljpswd
 global djpwsd
@@ -51,14 +58,22 @@ global ptext
 global lprops
 global usej
 global usepic
-global twname
-global idname
-global twpswd
-global idpswd
+global sname
+global spswd
 global udate
+global loc
+global priv
+global cats
+global cwpurl
+global cwpname
+global cwppass
+global furl
+global fname
+global fpwrd
 
-set allvars [list txfg txbg brow wbg wtx ljname djname djpswd ljpswd ijname ijpswd dwname dwpswd twname idname twpswd idpswd udate novar]
+set allvars [list furl fname fpwrd surl spswd txfg txbg brow wbg wtx cwpurl cwpname cwppass wpname wppswd ljname djname djpswd ljpswd ijname ijpswd dwname dwpswd sname udate loc priv tube tbname tbpswd novar]
 
+set tagsc "0"
 set subject "subject"
 set mood "mood"
 set tags "enter, tags, here"
@@ -66,7 +81,9 @@ set tunes "music"
 set usepic " "
 set usej "which journal?"
 set lurl " "
-set udate "tweet, dent, status update"
+set udate "status.net update"
+set loc "127.0.0.1"
+set cats "unfiled"
 
 set year [clock format [clock second] -format %Y]
 set mon [clock format [clock seconds] -format %m]
@@ -85,6 +102,8 @@ set novar "cows"
 
 set file_types {
 {"All Files" * }
+{"Xposts" {.post}}
+{"html, xml" {.html .HTML .xml .XML}}
 {"Text Files" { .txt .TXT}}
 }
 
@@ -107,7 +126,7 @@ bind . <F5> {wordcount}
 
 tk_setPalette background $::wbg foreground $::wtx
 
-wm title . "eXp0stulate - x-posting blog client"
+wm title . "Xpostulate - x-posting blog client"
 
 ######3
 # Menus
@@ -119,10 +138,10 @@ frame .fluff -bd 1 -relief raised
 tk::menubutton .fluff.mb -text File -menu .fluff.mb.f 
 tk::menubutton .fluff.ed -text Edit -menu .fluff.ed.t 
 tk::menubutton .fluff.ins -text Insert -menu .fluff.ins.t 
-# tk::menubutton .fluff.pos -text Post -menu .fluff.pos.t
+tk::menubutton .fluff.bb -text BBcode -menu .fluff.bb.t
 tk::menubutton .fluff.view -text View -menu .fluff.view.t
 tk::label .fluff.font1 -text "Font size:" 
-ttk::combobox .fluff.size -width 4 -value [list 8 10 12 14 16 18 20 22 24 28] -state readonly
+ttk::combobox .fluff.size -width 4 -value [list 8 10 12 14 16 18 20 22] -state readonly
 
 bind .fluff.size <<ComboboxSelected>> [list sizeFont .txt.txt .fluff.size]
 
@@ -148,10 +167,9 @@ menu .fluff.ed.t -tearoff 1
 .fluff.ed.t add command -label "Redo" -command {catch {.txt.txt edit redo}} -accelerator Ctrl+r
 .fluff.ed.t add separator
 .fluff.ed.t add command -label "Search/Replace" -command {FindPopup} -accelerator F3
+.fluff.ed.t add command -label "convert <tags>" -command {fixtags}
 .fluff.ed.t add separator
 .fluff.ed.t add command -label "Word Count" -command {wordcount} -accelerator F5
-.fluff.ed.t add command -label "Time Stamp" -command {indate}
-.fluff.ed.t add command -label "Special Characters" -underline 0 -command specialbox -accelerator F4
 .fluff.ed.t add separator
 .fluff.ed.t add command -label "Preferences" -command {prefs} -accelerator F8
 
@@ -164,22 +182,40 @@ tk::button .fluff.abt -text "About" -command {about}
 ###########################3
 menu .fluff.ins.t -tearoff 1
 .fluff.ins.t add command -label "LJ Cut" -command {cutin}
-.fluff.ins.t add command -label "User" -command {userin}
+.fluff.ins.t add command -label "LJ User" -command {userin}
 .fluff.ins.t add command -label "Community" -command {commin}
 .fluff.ins.t add command -label "Hyperlink" -command {linkin}
+.fluff.ins.t add command -label "DW User" -command {userdw}
+.fluff.ins.t add command -label "DW Cut" -command {cutdw} 
+.fluff.ins.t add separator
+.fluff.ins.t add command -label "Ruler" -command {hrin}
+.fluff.ins.t add command -label "BlockQuote" -command {bquote}
+.fluff.ins.t add command -label "LineBreak" -command {bne}
+.fluff.ins.t add separator
+.fluff.ins.t add command -label "Time Stamp" -command {indate}
+.fluff.ins.t add command -label "Special Characters" -underline 0 -command specialbox -accelerator F4
 
-# post menu
-###############################
-# menu .fluff.pos.t -tearoff 1
-# .fluff.pos.t add command -label "Livejournal" -command {ljpost}
-# .fluff.pos.t add command -label "InsaneJournal" -command {ijpost}
-# .fluff.pos.t add command -label "DreamWidth" -command {dwpost}
-# .fluff.pos.t add command -label "WordPress" -command {wppost}
-# .fluff.pos.t add command -label "Blogger" -command {blpost}
+# bbcode menu
+##################
+menu .fluff.bb.t -tearoff 1
+.fluff.bb.t add command -label "Link" -command {bblink}
+.fluff.bb.t add command -label "Image" -command {bimg}
+.fluff.bb.t add command -label "E-mail" -command {bmail}
+.fluff.bb.t add command -label "Friendika" -command {bfren}
+.fluff.bb.t add command -label "Youtube" -command {ytube}
+.fluff.bb.t add command -label "BlockQuote" -command {bquote}
+.fluff.bb.t add command -label "CodeBlock" -command {bcode}
+.fluff.bb.t add command -label "Time Stamp" -command {indate}
+
 
 # view menu
 ####################################
 menu .fluff.view.t -tearoff 1
+
+.fluff.view.t add command -label "My WordPress" -command {
+    exec $::brow http://$::wpname.wordpress.com &
+    }
+    
 .fluff.view.t add command -label "My InsaneJournal" -command {
     exec $::brow "http://$::ijname.insanejournal.com" &
 }
@@ -188,8 +224,16 @@ menu .fluff.view.t -tearoff 1
     exec $::brow "http://$::ljname.livejournal.com" &
 }
 .fluff.view.t add command -label "My DreamWidth" -command {
-    exec $::brow "http://$::ljname.livejournal.com" &
+    exec $::brow "http://$::dwname.livejournal.com" &
 }
+.fluff.view.t add command -label "My Deadjournal" -command {
+    exec $::brow "http://$::djname.deadjournal.com" &
+}
+
+.fluff.view.t add command -label "My Tumblr.com" -command {
+    exec $::brow http://$::tbname.tumblr.com &
+    }
+
 .fluff.view.t add command -label "LiveJournal.com" -command {
     exec $::brow http://www.livejournal.com &
     }
@@ -199,11 +243,24 @@ menu .fluff.view.t -tearoff 1
 .fluff.view.t add command -label "DreamWidth.com" -command {
     exec $::brow http://www.dreamwidth.com &
     }
+    .fluff.view.t add command -label "Deadjournal.com" -command {
+    exec $::brow "http://www.deadjournal.com" &
+}
+    
+.fluff.view.t add command -label "Tumblr.com" -command {
+    exec $::brow http://www.tumblr.com &
+    }
 
-#tk::label .fluff.lbl1 -text "Post to:"
-#tk::button .fluff.plj -text "LJ" -command ljpost
-#tk::button .fluff.pij -text "IJ" -command ijpost
-#tk::button .fluff.pdw -text "DW" -command dwpost
+.fluff.view.t add command -label "Custom WP  Blog" -command {
+    exec $::brow $::cwpurl &
+    }
+.fluff.view.t add command -label "Friendika" -command {
+	exec $::brow $::furl &
+}
+.fluff.view.t add command -label "StatusNet" -command {
+    exec $::brow "$::surl" &
+}
+
 
 # pack em in...
 ############################
@@ -211,14 +268,11 @@ menu .fluff.view.t -tearoff 1
 pack .fluff.mb -in .fluff -side left
 pack .fluff.ed -in .fluff -side left
 pack .fluff.ins -in .fluff -side left
-# pack .fluff.pos -in .fluff -side left
+pack .fluff.bb -in .fluff -side left
 pack .fluff.view -in .fluff -side left
 pack .fluff.font1 -in .fluff -side left
 pack .fluff.size -in .fluff -side left
-# pack .fluff.lbl1 -in .fluff -side left
-# pack .fluff.plj -in .fluff -side left
-# pack .fluff.pij -in .fluff -side left
-# pack .fluff.pdw -in .fluff -side left
+
 pack .fluff.help -in .fluff -side right
 pack .fluff.abt -in .fluff -side right
 
@@ -231,25 +285,61 @@ frame .ljo
 grid [tk::label .ljo.sujet -text "Subject:"]\
 [tk::entry .ljo.assunto -textvariable subject]\
 [tk::label .ljo.tagz -text "Tags:"]\
-[tk::entry .ljo.tagit -textvariable tags]
+[tk::entry .ljo.tagit -textvariable tags]\
+[tk::label .ljo.ct -text "Category:"]\
+[tk::entry .ljo.cats -textvariable cats]
 
-grid [tk::label .ljo.md -text "Current mood:"]\
+
+grid [tk::label .ljo.md -text "Mood:"]\
 [tk::entry .ljo.mude -textvariable mood]\
-[tk::label .ljo.tunages -text "Current music:"]\
+[tk::label .ljo.tunages -text "Music:"]\
 [tk::entry .ljo.tunez -textvariable tunes]\
+[tk::label .ljo.l0c -text "Location:"]\
+[tk::entry .ljo.lcn -textvariable loc]
 
-frame .dt
+frame .sec
 
-grid [tk::label .dt.ol -text "Tweet/Dent:"]\
-[tk::entry .dt.ent -width 50 -textvariable udate]\
-[tk::button .dt.dt -text "Dent" -command "dent"]\
-[tk::button .dt.tw -text "Tweet" -command "tweet"]\
-[tk::button .dt.qt -text "Quit" -command {leave}]
+grid [tk::label .sec.pr -text "Privacy:"]\
+[tk::radiobutton .sec.pub   -value "default" -text "public"    -variable priv]\
+[tk::radiobutton .sec.fri   -value "usemask" -text "friends" -variable priv]\
+[tk::radiobutton .sec.pri   -value "private" -text "private"    -variable priv]
+
 
 
 
 pack .ljo -in . -fill x
-pack .dt -in . -fill x
+pack .sec -in . -fill x
+
+
+
+frame .lj1
+
+
+# post buttons
+###################
+tk::label .lj1.lbl1 -text "Post to:"
+tk::entry .lj1.uj -textvariable usej
+tk::label .lj1.oj -text "on:"
+tk::menubutton .lj1.post -text "Post to: " -menu .lj1.post.t
+
+# xml post menu
+##############################
+menu .lj1.post.t -tearoff 1
+
+.lj1.post.t add command -label LiveJournal -command ljpost
+.lj1.post.t add command -label InsaneJournal -command ijpost
+.lj1.post.t add command -label DreamWidth -command dwpost
+.lj1.post.t add command -label DeadJournal -command djpost
+.lj1.post.t add command -label WordPress -command wppost
+.lj1.post.t add command -label CustomWP -command cwpost
+.lj1.post.t add command -label Tumblr -command tbpost
+.lj1.post.t add command -label Friendika -command fpost
+
+pack .lj1 -in . -fill x
+pack .lj1.lbl1 -in .lj1 -side left
+pack .lj1.uj -in .lj1 -side left
+pack .lj1.oj -in .lj1 -side left
+pack .lj1.post -in .lj1 -side left
 
 # Here is the text widget
 ########################################TEXT WIDGET
@@ -274,21 +364,15 @@ set foco .txt.txt
 bind .txt.txt <FocusIn> {set foco .txt.txt}
 
 
-frame .lj1
+# status net 
+###########################################
+frame .dt
 
-
-# post buttons
-###################
-grid [tk::label .lj1.lbl1 -text "Post to:"]\
-[tk::entry .lj1.uj -textvariable usej]\
-[tk::label .lj1.oj -text "on:"]\
-[tk::button .lj1.plj -text "LiveJournal" -command ljpost]\
-[tk::button .lj1.pij -text "InsaneJournal" -command ijpost]\
-[tk::button .lj1.pdj -text "DeadJournal" -command djpost]\
-[tk::button .lj1.pdw -text "DreamWidth" -command dwpost]
-
-
-pack .lj1 -in . -fill x
+grid [tk::label .dt.ol -text "StatusNet:"]\
+[tk::entry .dt.ent -width 70 -textvariable udate]\
+[tk::button .dt.tw -text "StatusNet" -command "snet"]\
+[tk::button .dt.qt -text "Quit" -command {exit}]
+pack .dt -in . -fill x
 
 ###
 # font size, affects size of font in editor, not in post
@@ -357,7 +441,7 @@ toplevel .about
 wm title .about "About eXpostulate"
 # tk_setPalette background $::wbg 
 
-tk::message .about.t -text "eXpostulate\n by Tony Baldwin\n tony@baldwinsoftware.com\n A x-posting blogging client written in tcl/tk\n Released under the GPL\n For more info see README, or\n http://www.baldwinsoftware.com/xpost.html\n" -width 280
+tk::message .about.t -text "Xpostulate\n by Tony Baldwin\n tony@baldwinsoftware.com\n A x-posting blogging client written in tcl/tk\n Released under the GPL\n For more info see README, or\n http://www.baldwinsoftware.com/xpost.html\n" -width 280
 tk::button .about.o -text "Okay" -command {destroy .about} 
 pack .about.t -in .about -side top
 pack .about.o -in .about -side top
@@ -808,6 +892,8 @@ proc wordcount {} {
 	pack .count.ok -in .count -side top
 }
 
+#############################################
+# insertions menu commands
 
 ## insert time stamp
 
@@ -829,8 +915,127 @@ proc cutin {} {
 .txt.txt insert insert "<lj-cut text=\"put text here\"> "
 }
 
+# note distinct dreamwidth cut and user
+proc userdw {} {
+.txt.txt insert insert "<user name=\"put name here\"> "
+}
+
+proc cutdw {} {
+.txt.txt insert insert "<cut text=\"put text here\"> "
+}
+
+# bbcode tags
+# to be inserted in the post.
+###################################
+proc bblink {} {
+
+toplevel .link
+wm title .link "Insert Hyperlink"
+
+frame .link.s
+grid [tk::label .link.s.l1 -text "URL:"]\
+[tk::entry .link.s.e1 -width 40 -textvariable inurl]
+grid [tk::label .link.s.l2 -text "Link text:"]\
+[tk::entry .link.s.e2 -width 40 -textvariable ltxt]
+
+pack .link.s -in .link -side left
+
+frame .link.btns
+
+grid [tk::button .link.btns.in -text "Insert link" -command {.txt.txt insert insert "\[url=$inurl\]$ltxt\[/url\]"}]\
+[tk::button .link.btns.out -text "Done" -command {destroy .link}]
+
+pack .link.btns -in .link -side left
+}
+
+proc bcode {} {
+.txt.txt insert insert "\[code\]INSERT CODE TEXT HERE\[/code\]"
+}
+
+proc ytube {} {
+.txt.txt insert insert "\[youtube\]INSERT VIDEO URL HERE\[/youtube\]"
+}
+
+proc bquote {} {
+.txt.txt insert insert "\[quote\]INSERT QUOTED TEXT HERE\[/quote\]"
+}
+
+proc bimg {} {
+
+toplevel .link
+wm title .link "Insert Image"
+
+frame .link.s
+grid [tk::label .link.s.l1 -text "IMG URL:"]\
+[tk::entry .link.s.e1 -width 40 -textvariable imurl]
+
+pack .link.s -in .link -side left
+
+frame .link.btns
+
+grid [tk::button .link.btns.in -text "Insert link" -command {.txt.txt insert insert "\[img\]$imurl\[/img\]"}]\
+[tk::button .link.btns.out -text "Done" -command {destroy .link}]
+
+pack .link.btns -in .link -side left
+}
+
+proc bmail {} {
+
+toplevel .link
+wm title .link "Insert E-mail"
+
+frame .link.s
+grid [tk::label .link.s.l1 -text "E-mail address:"]\
+[tk::entry .link.s.e1 -width 40 -textvariable eml]
+
+pack .link.s -in .link -side left
+
+frame .link.btns
+
+grid [tk::button .link.btns.in -text "Insert link" -command {.txt.txt insert insert "\[mail\]$eml\[/mail\]"}]\
+[tk::button .link.btns.out -text "Done" -command {destroy .link}]
+
+pack .link.btns -in .link -side left
+}
+
+
+proc bfren {} {
+.txt.txt insert insert "~friendika"
+}
+# some html tags
+# for insertion
+###################################
 proc linkin {} {
-.txt.txt insert insert "<a href=\"put link here\">put text here</a>"
+
+toplevel .link
+wm title .link "Insert Hyperlink"
+
+frame .link.s
+grid [tk::label .link.s.l1 -text "URL:"]\
+[tk::entry .link.s.e1 -width 40 -textvariable url]
+grid [tk::label .link.s.l2 -text "Link text:"]\
+[tk::entry .link.s.e2 -width 40 -textvariable ltxt]
+
+pack .link.s -in .link -side left
+
+frame .link.btns
+
+grid [tk::button .link.btns.in -text "Insert link" -command {.txt.txt insert insert "<a href=\"$url\">$ltxt</a>"}]\
+[tk::button .link.btns.out -text "Done" -command {destroy .link}]
+
+pack .link.btns -in .link -side left
+}
+
+proc hrin {} {
+.txt.txt insert insert "<hr />"
+}
+
+proc bquote {} {
+.txt.txt insert insert "<blockquote>INSERT QUOTE TEXT HERE</blockquote>"
+}
+
+proc bne {} {
+.txt.txt insert insert "<br />"
 }
 
 # b'bye (quit procedure)
@@ -869,7 +1074,7 @@ proc yclear {} {
 	.txt.txt edit reset
 	.txt.txt edit modified 0
 	set ::filename " "
-	wm title . "eXp0stulate"
+	wm title . "Xpostulate"
 }
 
 # open html in browser
@@ -878,7 +1083,7 @@ proc yclear {} {
 proc browz {} {
 	global brow
 	if {$brow != " "} {
-	eval exec $::brow http://www.livejourna.com &
+	eval exec $::brow http://www.livejournal.com &
 	} else {
 	tk_messageBox -message "You have not chosen a browser.\nLet's set the browser now." -type ok -title "Set browser"
 	set brow [tk_getOpenFile -filetypes $::file_types]
@@ -904,6 +1109,33 @@ set filetypes " "
 set ::brow [tk_getOpenFile -filetypes $filetypes -initialdir "/usr/bin"]
 }
 
+proc fixtags {} {
+
+if { $::tagsc eq 0 } {
+set content [.txt.txt get 1.0 end]
+set escaped [string map {
+	"<" "&lt;"
+	">" "&gt;"
+	"&" "&amp;"
+	\"  "\""
+	} $content]
+	set ::tagsc "1"
+.txt.txt delete 1.0 end
+.txt.txt insert insert $escaped
+	} else {
+	if { $::tagsc eq 1 } {
+set content [.txt.txt get 1.0 end]
+set escaped [string map {
+	"&lt;" "<" 
+	"&gt;" ">" 
+	"&amp;" "&" 
+	} $content]
+	set ::tagsc "0"
+.txt.txt delete 1.0 end
+.txt.txt insert insert $escaped
+	}
+   }
+}
 
 ######################
 #  global preferences
@@ -913,7 +1145,7 @@ proc prefs {} {
 
 toplevel .pref
 
-wm title .pref "eXp0stulate preferences"
+wm title .pref "Xpostulate preferences"
 
 
 grid [tk::label .pref.lbl -text "Set global preferences here"]
@@ -943,6 +1175,8 @@ grid [tk::label .pref.ijn -text "ij Username:"]\
 [tk::label .pref.ijp -text "ij password:"]\
 [tk::entry .pref.ijpw -show * -textvariable ijpswd]
 
+grid [tk::label .pref.djo -text "DeadJournal settings:"]
+
 grid [tk::label .pref.djn -text "dj Username:"]\
 [tk::entry .pref.djnome -textvariable djname]\
 [tk::label .pref.djp -text "dj password:"]\
@@ -955,19 +1189,48 @@ grid [tk::label .pref.dwn -text "dw Username:"]\
 [tk::label .pref.dwp -text "dw password:"]\
 [tk::entry .pref.dwpw -show * -textvariable dwpswd]
 
-grid [tk::label .pref.ddo -text "Identi.ca settings:"]
+grid [tk::label .pref.wpo -text "WordPress settings:"]
+grid [tk::label .pref.wpn -text "WP Username:"]\
+[tk::entry .pref.wpname -textvariable wpname]\
+[tk::label .pref.wpp -text "WP password:"]\
+[tk::entry .pref.wppw -show * -textvariable wppswd]
 
-grid [tk::label .pref.idn -text "Id Username:"]\
-[tk::entry .pref.idnome -textvariable idname]\
-[tk::label .pref.idpp -text "Id password:"]\
-[tk::entry .pref.idpw -show * -textvariable idpswd]
+grid [tk::label .pref.cwpo -text "Custom WP settings:"]
+grid [tk::label .pref.cwpn -text "WP Username:"]\
+[tk::entry .pref.cwpname -textvariable cwpname]\
+[tk::label .pref.cwpp -text "WP password:"]\
+[tk::entry .pref.cwppw -show * -textvariable cwppass]
 
-grid [tk::label .pref.ttwo -text "Twitter settings:"]
+grid [tk::label .pref.cpwur -text "Custom WP url: "]\
+[tk::entry .pref.cpru -textvariable cwpurl]
 
-grid [tk::label .pref.twn -text "Tw Username:"]\
-[tk::entry .pref.twnome -textvariable twname]\
-[tk::label .pref.twp -text "Tw password:"]\
-[tk::entry .pref.twpw -show * -textvariable twpswd]
+grid [tk::label .pref.ttwo -text "StatusNet settings:"]
+
+grid [tk::label .pref.twn -text "SN Username:"]\
+[tk::entry .pref.twnome -textvariable sname]\
+[tk::label .pref.twp -text "SN password:"]\
+[tk::entry .pref.twpw -show * -textvariable spswd]
+
+grid [tk::label .pref.surl -text "StatusNet site url: "]\
+[tk::entry .pref.snrl -textvariable surl]
+
+grid [tk::label .pref.tumblr -text "Tumblr Settings:"]
+grid [tk::label .pref.tbn -text "Tb blogname:"]\
+[tk::entry .pref.tbnome -textvariable tbname]\
+[tk::label .pref.tbp -text "Tb password:"]\
+[tk::entry .pref.tbpw -show * -textvariable tbpswd]
+grid [tk::label .pref.tube -text "Tumblr e-mail:"]\
+[tk::entry .pref.tubular -textvariable tube]
+
+grid [tk::label .pref.b1o -text "Friendika:"]
+
+grid [tk::label .pref.b1un -text "Username:"]\
+[tk::entry .pref.b1nome -textvariable fname]\
+[tk::label .pref.b1p -text "password:"]\
+[tk::entry .pref.b1pw -show * -textvariable fpwrd]
+
+grid [tk::label .pref.b1n -text "Friendika Server:"]\
+[tk::entry .pref.b1nm -text furl]\
 
 grid [tk::button .pref.sv -text "Save Preferences" -command sapro]\
 [tk::button .pref.ok -text "OK" -command {destroy .pref}]
@@ -976,6 +1239,20 @@ grid [tk::button .pref.sv -text "Save Preferences" -command sapro]\
 }
 
 
+################
+# post to friendika
+
+proc fpost {} {
+    
+set ptext [.txt.txt get 1.0 {end -1c}]
+	set auth "$::fname:$::fpwrd"
+	set auth64 [::base64::encode $auth]
+	set myquery [::http::formatQuery "status" "$ptext" "source" "Xpostulate"]
+	set myauth [list "Authorization" "Basic $auth64"]
+	set token [::http::geturl $::furl/api/statuses/update.xml -headers $myauth -query $myquery]
+	
+}
+
 
 
 
@@ -983,27 +1260,80 @@ grid [tk::button .pref.sv -text "Save Preferences" -command sapro]\
 # post to insanejournal...
 
 proc ijpost {} {
+if { $::tagsc eq 0 } {
+set content [.txt.txt get 1.0 end]
+set escaped [string map {
+	"<" "&lt;"
+	">" "&gt;"
+	"&" "&amp;"
+	\"  "\""
+	} $content]
+	set ::tagsc "1"
+.txt.txt delete 1.0 end
+.txt.txt insert insert $escaped
+}
 
 set ptext [.txt.txt get 1.0 {end -1c}]
 
-set login [::http::formatQuery mode login user $::ijname password $::ijpswd ]
-set log [http::geturl http://www.insanejournal.com/interface/flat:80 -query $login]
-    
-set post [::http::formatQuery mode postevent auth_method clear user $::ijname password $::ijpswd subject $::subject year $::year mon $::mon day $::day hour $::hour min $::min prop_current_music $::tunes prop_current_mood $::mood prop_taglist $::tags usejournal $::usej event $ptext ]
-set plength [string length $post]
-set dopost [http::geturl http://www.insanejournal.com/interface/flat:80 -query $post]
+global mypost
+set mypost "<?xml version=\"1.0\"?>
+<methodCall><methodName>LJ.XMLRPC.postevent</methodName>
+<params><param>
+<value><struct>
+<member><name>year</name><value><int>$::year</int></value></member>
+<member><name>mon</name><value><int>$::mon</int></value></member>
+<member><name>day</name><value><int>$::day</int></value></member>
+<member><name>hour</name><value><int>$::hour</int></value></member>
+<member><name>min</name><value><int>$::min</int></value></member>
+<member><name>usejournal</name><value><string>$::usej</string></value></member>
+<member><name>event</name><value><string>$ptext</string></value></member>
+<member><name>username</name><value><string>$::ijname</string></value></member>
+<member><name>password</name><value><string>$::ijpswd</string></value></member>
+<member><name>useragent</name><value><string>Xpostulate/0.2b</string></value></member>
+<member><name>subject</name><value><string>$::subject</string></value></member>
+<member><name>lineendings</name><value><string>unix</string></value></member>
+<member><name>security</name><value><string>$::priv</string></value></member>
+<member><name>ver</name><value><int>1</int></value></member>
+<member><name>props</name>
+<value><struct>
+<member><name>useragent</name><value><string>Xpostulate</string></value></member>
+<member><name>current_location</name><value><string>$::loc</string></value></member>
+<member><name>current_mood</name><value><string>$::mood</string></value></member>
+<member><name>taglist</name><value><string>$::tags</string></value></member>
+<member><name>current_music</name><value><string>$::tunes</string></value></member>
+</struct></value></member>
+</struct></value>
+</param></params>
+</methodCall>"
+
+global plength
+set plength [string length $mypost]
+
+set dopost [http::geturl http://www.insanejournal.com/interface/xmlrpc -query $::mypost -type "text/xml" ]
 set ljmta [http::meta $dopost]
-set ljl [http::size $dopost]
 set ljstat [http::status $dopost]
+set ljresponse [http::data $dopost]
+# upvar #0 $dopost state
+# puts $state(body)
 
 toplevel .rsp 
 wm title .rsp "Post Status"
-grid [tk::label .rsp.lbl -text "Tweak says: $ljstat\nPost length: $ljl"]
-grid [tk::button .rsp.view -text "View Journal" -command {
-    set ijv "http://$::usej.insanejournal.com"
-    exec $::brow $ijv &
+
+frame .rsp.btns
+grid [tk::label .rsp.btns.lbl -text "Tweak says: $ljstat\nPost length: $::plength"]
+grid [tk::button .rsp.btns.view -text "View Journal" -command {
+    set ljv "http://$::usej.insanejournal.com"
+    exec $::brow $ljv &
 }]\
-[tk::button .rsp.ok -text "DONE" -command {destroy .rsp}]
+[tk::button .rsp.btns.ok -text "DONE" -command {destroy .rsp}]
+
+frame .rsp.txt
+text .rsp.txt.t -width 80 -height 20
+.rsp.txt.t insert end $ljresponse
+
+pack .rsp.btns -in .rsp -side top -fill x
+pack .rsp.txt.t -in .rsp.txt -side top -fill x
+pack .rsp.txt -in .rsp -side top -fill x
 
 }
 
@@ -1012,26 +1342,79 @@ grid [tk::button .rsp.view -text "View Journal" -command {
 
 proc djpost {} {
 
+if { $::tagsc eq 0 } {
+set content [.txt.txt get 1.0 end]
+set escaped [string map {
+	"<" "&lt;"
+	">" "&gt;"
+	"&" "&amp;"
+	\"  "\""
+	} $content]
+	set ::tagsc "1"
+.txt.txt delete 1.0 end
+.txt.txt insert insert $escaped
+}
+
 set ptext [.txt.txt get 1.0 {end -1c}]
 
-set login [::http::formatQuery mode login user $::ijname password $::ijpswd ]
-set log [http::geturl http://www.deadjournal.com/interface/flat:80 -query $login]
-    
-set post [::http::formatQuery mode postevent auth_method clear user $::djname password $::djpswd subject $::subject year $::year mon $::mon day $::day hour $::hour min $::min prop_current_music $::tunes prop_current_mood $::mood prop_taglist $::tags usejournal $::usej event $ptext ]
-set plength [string length $post]
-set dopost [http::geturl http://www.deadjournal.com/interface/flat:80 -query $post]
+global mypost
+set mypost "<?xml version=\"1.0\"?>
+<methodCall><methodName>LJ.XMLRPC.postevent</methodName>
+<params><param>
+<value><struct>
+<member><name>year</name><value><int>$::year</int></value></member>
+<member><name>mon</name><value><int>$::mon</int></value></member>
+<member><name>day</name><value><int>$::day</int></value></member>
+<member><name>hour</name><value><int>$::hour</int></value></member>
+<member><name>min</name><value><int>$::min</int></value></member>
+<member><name>usejournal</name><value><string>$::usej</string></value></member>
+<member><name>event</name><value><string>$ptext</string></value></member>
+<member><name>username</name><value><string>$::djname</string></value></member>
+<member><name>password</name><value><string>$::djpswd</string></value></member>
+<member><name>subject</name><value><string>$::subject</string></value></member>
+<member><name>lineendings</name><value><string>unix</string></value></member>
+<member><name>security</name><value><string>$::priv</string></value></member>
+<member><name>ver</name><value><int>1</int></value></member>
+<member><name>props</name>
+<value><struct>
+<member><name>useragent</name><value><string>Xpostulate</string></value></member>
+<member><name>current_location</name><value><string>$::loc</string></value></member>
+<member><name>current_mood</name><value><string>$::mood</string></value></member>
+<member><name>taglist</name><value><string>$::tags</string></value></member>
+<member><name>current_music</name><value><string>$::tunes</string></value></member>
+</struct></value></member>
+</struct></value>
+</param></params>
+</methodCall>"
+
+global plength
+set plength [string length $mypost]
+
+set dopost [http::geturl http://www.deadjournal.com/interface/xmlrpc -query $::mypost -type "text/xml" ]
 set ljmta [http::meta $dopost]
-set ljl [http::size $dopost]
 set ljstat [http::status $dopost]
+set ljresponse [http::data $dopost]
+# upvar #0 $dopost state
+# puts $state(body)
 
 toplevel .rsp 
 wm title .rsp "Post Status"
-grid [tk::label .rsp.lbl -text "Death says: $ljstat\nPost length: $ljl"]
-grid [tk::button .rsp.view -text "View Journal" -command {
-    set djv "http://$::usej.deadjournal.com"
-    exec $::brow $djv &
+
+frame .rsp.btns
+grid [tk::label .rsp.btns.lbl -text "Death says: $ljstat\nPost length: $::plength"]
+grid [tk::button .rsp.btns.view -text "View Journal" -command {
+    set ljv "http://$::usej.deadjournal.com"
+    exec $::brow $ljv &
 }]\
-[tk::button .rsp.ok -text "DONE" -command {destroy .rsp}]
+[tk::button .rsp.btns.ok -text "DONE" -command {destroy .rsp}]
+
+frame .rsp.txt
+text .rsp.txt.t -width 80 -height 20
+.rsp.txt.t insert end $ljresponse
+
+pack .rsp.btns -in .rsp -side top -fill x
+pack .rsp.txt.t -in .rsp.txt -side top -fill x
+pack .rsp.txt -in .rsp -side top -fill x
 
 }
 
@@ -1041,72 +1424,105 @@ grid [tk::button .rsp.view -text "View Journal" -command {
 
 proc dwpost {} {
 
-set ptext [.txt.txt get 1.0 {end -1c}]
-
-set login [::http::formatQuery mode login user $::dwname password $::dwpswd ]
-set log [http::geturl http://www.dreamwidth.org/interface/flat:80 -query $login]
-    
-set post [::http::formatQuery mode postevent auth_method clear user $::dwname password $::dwpswd subject $::subject year $::year mon $::mon day $::day hour $::hour min $::min prop_current_music $::tunes prop_current_mood $::mood prop_taglist $::tags usejournal $::usej event $ptext ]
-set plength [string length $post]
-set dopost [http::geturl http://www.dreamwidth.org/interface/flat:80 -query $post]
-set ljmta [http::meta $dopost]
-set ljl [http::size $dopost]
-set ljstat [http::status $dopost]
-
-toplevel .rsp 
-wm title .rsp "Post Status"
-grid [tk::label .rsp.lbl -text "The dream voice says: $ljstat\nPost length: $ljl"]
-grid [tk::button .rsp.view -text "View Journal" -command {
-    set dwv "http://$::usej.dreamwidth.org"
-    exec $::brow $dwv &
-}]\
-[tk::button .rsp.ok -text "DONE" -command {destroy .rsp}]
-
+if { $::tagsc eq 0 } {
+set content [.txt.txt get 1.0 end]
+set escaped [string map {
+	"<" "&lt;"
+	">" "&gt;"
+	"&" "&amp;"
+	\"  "\""
+	} $content]
+	set ::tagsc "1"
+.txt.txt delete 1.0 end
+.txt.txt insert insert $escaped
 }
 
-################
-# post to livejournal...
-
-proc ljpost {} {
-    
 set ptext [.txt.txt get 1.0 {end -1c}]
-set login [::http::formatQuery mode login user $::ljname password $::ljpswd ]
-set log [http::geturl http://www.livejournal.com/interface/flat:80 -query $login]
-    
-set post [::http::formatQuery mode postevent auth_method clear user $::ljname password $::ljpswd subject $::subject year $::year mon $::mon day $::day hour $::hour min $::min prop_current_music $::tunes prop_current_mood $::mood prop_taglist $::tags usejournal $::usej event $ptext ]
-set plength [string length $post]
-set dopost [http::geturl http://www.livejournal.com/interface/flat:80 -query $post]
+
+global mypost
+set mypost "<?xml version=\"1.0\"?>
+<methodCall><methodName>LJ.XMLRPC.postevent</methodName>
+<params><param>
+<value><struct>
+<member><name>year</name><value><int>$::year</int></value></member>
+<member><name>mon</name><value><int>$::mon</int></value></member>
+<member><name>day</name><value><int>$::day</int></value></member>
+<member><name>hour</name><value><int>$::hour</int></value></member>
+<member><name>min</name><value><int>$::min</int></value></member>
+<member><name>usejournal</name><value><string>$::usej</string></value></member>
+<member><name>event</name><value><string>$ptext</string></value></member>
+<member><name>username</name><value><string>$::dwname</string></value></member>
+<member><name>password</name><value><string>$::dwpswd</string></value></member>
+<member><name>subject</name><value><string>$::subject</string></value></member>
+<member><name>lineendings</name><value><string>unix</string></value></member>
+<member><name>security</name><value><string>$::priv</string></value></member>
+<member><name>ver</name><value><int>1</int></value></member>
+<member><name>props</name>
+<value><struct>
+<member><name>useragent</name><value><string>Xpostulate</string></value></member>
+<member><name>current_location</name><value><string>$::loc</string></value></member>
+<member><name>current_mood</name><value><string>$::mood</string></value></member>
+<member><name>taglist</name><value><string>$::tags</string></value></member>
+<member><name>current_music</name><value><string>$::tunes</string></value></member>
+</struct></value></member>
+</struct></value>
+</param></params>
+</methodCall>"
+
+global plength
+set plength [string length $mypost]
+
+set dopost [http::geturl http://www.dreamwidth.org/interface/xmlrpc -query $::mypost -type "text/xml" ]
 set ljmta [http::meta $dopost]
-set ljl [http::size $dopost]
 set ljstat [http::status $dopost]
+set ljresponse [http::data $dopost]
+# upvar #0 $dopost state
+# puts $state(body)
 
 toplevel .rsp 
 wm title .rsp "Post Status"
-grid [tk::label .rsp.lbl -text "Frank says: $ljstat\nPost length: $ljl"]
-grid [tk::button .rsp.view -text "View Journal" -command {
-    set ljv "http://$::usej.livejournal.com"
+
+frame .rsp.btns
+grid [tk::label .rsp.btns.lbl -text "Dream voices say: $ljstat\nPost length: $::plength"]
+grid [tk::button .rsp.btns.view -text "View Journal" -command {
+    set ljv "http://$::usej.dreamwidth.org"
     exec $::brow $ljv &
 }]\
-[tk::button .rsp.ok -text "DONE" -command {destroy .rsp}]
+[tk::button .rsp.btns.ok -text "DONE" -command {destroy .rsp}]
+
+frame .rsp.txt
+text .rsp.txt.t -width 80 -height 20
+.rsp.txt.t insert end $ljresponse
+
+pack .rsp.btns -in .rsp -side top -fill x
+pack .rsp.txt.t -in .rsp.txt -side top -fill x
+pack .rsp.txt -in .rsp -side top -fill x
 
 }
+
 
 #####################################
 # Help dialog
 proc help {} {
 toplevel .help
-wm title .help "eXp0stulate help"
+wm title .help "Xpostulate help"
 
 frame .help.bt
-grid [tk::button .help.bt.out -text "Okay" -command {destroy .help}]\
-[tk::button .help.bt.vt -text "visit baldwinsoftware.com" -command {
-set tlj "http://www.baldwinsoftware.com/"
-exec $::brow $tlj &}]
+grid [tk::button .help.bt.vt -text "RTFM" -command {
+set tlj "http://baldwinsoftware.com/wiki/pmwiki.php?n=Main.Xpostman"
+exec $::brow $tlj &}]\
+[tk::button .help.bt.lj -text "LJ Xpost Comm" -command {
+set tlj "http://xpostulate.livejournal.com"
+exec $::brow $tlj &}]\
+[tk::button .help.bt.dw -text "DW Xpost Comm" -command {
+set tlj "http://xpostulate.dreamwidth.org/"
+exec $::brow $tlj &}]\
+[tk::button .help.bt.out -text "Close" -command {destroy .help}]
 
 frame .help.t
 
-text .help.t.inf -width 80 -height 20
-.help.t.inf insert end "eXp0stulate, a FREE and ticklish blogging client.\nBlog posting with eXp0stulate is pretty basic, at this juncture.\nMore features coming soon.\nFill in the fields, as described, which should be self-explanatory.\nChanging the font size in the editor is for your viewing pleasure,\nand won't affect your post (use html tags for that).\nThe 'View Journal' menu on the main interface will open your journal,\nthe button on the post response will open the journal to which you just posted,\nwhether yours, or a shared journal or community.\n\nMy IJ is http://tonybaldwin.insanejournal.com\nMy LJ is http://tonytraductor.livejourna.com\nMy DreamWidth is http://tonybaldwin.dreamwidth.org\nIf you have questions about how eXp0stulate works, feel free to e-mail me at\ntony@baldwinsoftware.com\nor join the baldwinsoftware.com/forum or googlegroups\nfurther info at http://baldwinsoftware.com/xpost.html"
+text .help.t.inf -width 80 -height 10
+.help.t.inf insert end "Xpostulate, a FREE and ticklish cross-posting blogging client.\nThere is a manual and further info at http://baldwinsoftware.com/xpost.html\nClicking the RTFM button above will open the manual in your browser.\nFor additional support, join \nhttp://xpostulate.livejournal.com, http://xpostulate.dreamwidth.org\nor the http://baldwinsoftware.com/forum \nwhich can all be accessed by clicking the above buttons\n\nTony Baldwin tony@baldwinsoftware.com"
 
 pack .help.bt -in .help -side top
 pack .help.t -in .help -side top
@@ -1114,35 +1530,269 @@ pack .help.t.inf -in .help.t -fill x
 
 }
 
-# status updates to identi.ca
-##################################
-proc dent {} {
-	if { [string length $::udate] > 140 } {
+
+# status updates to status.net
+#####################################
+proc snet {} {
+	set auth "$::sname:$::spswd"
+	set auth64 [::base64::encode $auth]
+	if { [string length $::udate] > 500 } {
 		toplevel .babbler 
 		wm title .babbler "You talk too much!"
-		tk::message .babbler.msg -text "Your updates is too long.\nIt can only have 164 characters,\nthere, smarty pants." -width 270
+		tk::message .babbler.msg -text "Your updates is too long.\nIt can only have 500 characters,\nthere, smarty pants." -width 270
 		tk::button .babbler.btn -text "Okay" -command {destroy .babbler} 
 		pack .babbler.msg -in .babbler -side top
 		pack .babbler.btn -in .babbler -side top
 		} else {
-		exec curl -u $::idname:$::idpswd -d status="$::udate" http://identi.ca/api/statuses/update.xml
-	}
+		set myquery [::http::formatQuery "status" "$::udate" "source" "Xpostulate"]
+		set myauth [list "Authorization" "Basic $auth64"]
+		# puts "http::geturl $::serv -headers $myauth -query $myquery"
+		set token [::http::geturl http://parlementum.net/api/statuses/update.xml -headers $myauth -query $myquery]
+		}
 }
 
-# status updates to twitter.com
-#####################################
-proc tweet {} {
-	if { [string length $::udate] > 140 } {
-		toplevel .babbler 
-		wm title .babbler "You talk too much!"
-		tk::message .babbler.msg -text "Your updates is too long.\nIt can only have 140 characters,\nthere, smarty pants." -width 270
-		tk::button .babbler.btn -text "Okay" -command {destroy .babbler} 
-		pack .babbler.msg -in .babbler -side top
-		pack .babbler.btn -in .babbler -side top
-		} else {
-		exec curl -u $::twname:$::twpswd -d status="$::udate" http://twitter.com/statuses/update.xml
-	}
+
+
+
+################
+# post to livejournal...
+
+proc ljpost {} {
+
+if { $::tagsc eq 0 } {
+set content [.txt.txt get 1.0 end]
+set escaped [string map {
+	"<" "&lt;"
+	">" "&gt;"
+	"&" "&amp;"
+	\"  "\""
+	} $content]
+	set ::tagsc "1"
+.txt.txt delete 1.0 end
+.txt.txt insert insert $escaped
 }
+
+set ptext [.txt.txt get 1.0 {end -1c}]
+
+global mypost
+set mypost "<?xml version=\"1.0\"?>
+<methodCall><methodName>LJ.XMLRPC.postevent</methodName>
+<params><param>
+<value><struct>
+<member><name>year</name><value><int>$::year</int></value></member>
+<member><name>mon</name><value><int>$::mon</int></value></member>
+<member><name>day</name><value><int>$::day</int></value></member>
+<member><name>hour</name><value><int>$::hour</int></value></member>
+<member><name>min</name><value><int>$::min</int></value></member>
+<member><name>usejournal</name><value><string>$::usej</string></value></member>
+<member><name>event</name><value><string>$ptext</string></value></member>
+<member><name>username</name><value><string>$::ljname</string></value></member>
+<member><name>password</name><value><string>$::ljpswd</string></value></member>
+<member><name>subject</name><value><string>$::subject</string></value></member>
+<member><name>lineendings</name><value><string>unix</string></value></member>
+<member><name>security</name><value><string>$::priv</string></value></member>
+<member><name>ver</name><value><int>1</int></value></member>
+<member><name>props</name>
+<value><struct>
+<member><name>useragent</name><value><string>Xpostulate</string></value></member>
+<member><name>current_location</name><value><string>$::loc</string></value></member>
+<member><name>current_mood</name><value><string>$::mood</string></value></member>
+<member><name>taglist</name><value><string>$::tags</string></value></member>
+<member><name>current_music</name><value><string>$::tunes</string></value></member>
+</struct></value></member>
+</struct></value>
+</param></params>
+</methodCall>"
+
+global plength
+set plength [string length $mypost]
+
+set dopost [http::geturl http://www.livejournal.com/interface/xmlrpc -query $::mypost -type "text/xml" ]
+set ljmta [http::meta $dopost]
+set ljstat [http::status $dopost]
+set ljresponse [http::data $dopost]
+# upvar #0 $dopost state
+# puts $state(body)
+
+toplevel .rsp 
+wm title .rsp "Post Status"
+
+frame .rsp.btns
+grid [tk::label .rsp.btns.lbl -text "Frank says: $ljstat\nPost length: $::plength"]
+grid [tk::button .rsp.btns.view -text "View Journal" -command {
+    set ljv "http://$::usej.livejournal.com"
+    exec $::brow $ljv &
+}]\
+[tk::button .rsp.btns.ok -text "DONE" -command {destroy .rsp}]
+
+frame .rsp.txt
+text .rsp.txt.t -width 80 -height 20
+.rsp.txt.t insert end $ljresponse
+
+pack .rsp.btns -in .rsp -side top -fill x
+pack .rsp.txt.t -in .rsp.txt -side top -fill x
+pack .rsp.txt -in .rsp -side top -fill x
+
+}
+
+###############################3
+# wordpress post
+
+proc wppost {} {
+
+if { $::tagsc eq 0 } {
+set content [.txt.txt get 1.0 end]
+set escaped [string map {
+	"<" "&lt;"
+	">" "&gt;"
+	"&" "&amp;"
+	\"  "\""
+	} $content]
+	set ::tagsc "1"
+.txt.txt delete 1.0 end
+.txt.txt insert insert $escaped
+}
+
+set ptext [.txt.txt get 1.0 {end -1c}]
+set time [clock format [clock seconds] -format %G%m%dT%T]
+
+global mypost  
+set mypost "<?xml version=\"1.0\"?>
+<methodCall>
+<methodName>metaWeblog.newPost</methodName> 
+<params>
+<param><value><string>MyBlog</string></value></param>
+<param><value><string>$::wpname</string></value></param> 
+<param><value><string>$::wppswd</string></value></param> 
+<param><struct>
+<member><name>categories</name><value><array><data><value>$::cats</value></data></array></value></member> 
+<member><name>description</name><value><string>$ptext</string></value></member> 
+<member><name>title</name><value><string>$::subject</string></value></member>
+</struct></param>
+<param><value><boolean>1</boolean></value></param> 
+</params> 
+</methodCall>"
+
+set plength [string length $ptext]
+
+set dopost [http::geturl http://$::wpname.wordpress.com/xmlrpc.php -query $::mypost -type "text/xml" ]
+set wpstat [http::status $dopost]
+set wpresponse [http::data $dopost]
+
+toplevel .rsp 
+wm title .rsp "Post Status"
+
+frame .rsp.btns
+grid [tk::label .rsp.btns.lbl -text "WP says: $wpstat\nPost length: $plength"]
+grid [tk::button .rsp.btns.view -text "View Journal" -command {
+    set wpu "http://$::wpname.wordpress.com"
+    exec $::brow $wpu &
+}]\
+[tk::button .rsp.btns.ok -text "DONE" -command {destroy .rsp}]
+
+frame .rsp.txt
+text .rsp.txt.t -width 80 -height 20
+.rsp.txt.t insert end $wpresponse
+
+pack .rsp.btns -in .rsp -side top -fill x
+pack .rsp.txt.t -in .rsp.txt -side top -fill x
+pack .rsp.txt -in .rsp -side top -fill x
+
+}
+
+
+############################################
+# post to tumblr
+proc tbpost {} {
+
+set ptext [.txt.txt get 1.0 {end -1c}]
+
+set login [::http::formatQuery mode login user $::tube password $::tbpswd ]
+set log [http::geturl http://www.tumblr.com/api/authenticate -query $login]
+    
+set post [http::formatQuery mode postevent auth_method clear email $::tube password $::tbpswd type regular generator Xpostulate tags $::tags title $::subject body $ptext]
+set plength [string length $post]
+set dopost [http::geturl http://www.tumblr.com/api/write -query $post]
+set ljmta [http::meta $dopost]
+set ljl [http::size $dopost]
+set ljstat [http::status $dopost]
+
+toplevel .rsp 
+wm title .rsp "Post Status"
+grid [tk::label .rsp.lbl -text "Tumblr says: $ljstat\nPost length: $ljl"]
+grid [tk::button .rsp.view -text "View Journal" -command {
+    set ijv "http://$::tbname.tumblr.com"
+    exec $::brow $ijv &
+}]\
+[tk::button .rsp.ok -text "DONE" -command {destroy .rsp}]
+
+}
+
+
+###############################3
+# custom wp post
+
+proc cwpost {} {
+
+if { $::tagsc eq 0 } {
+set content [.txt.txt get 1.0 end]
+set escaped [string map {
+	"<" "&lt;"
+	">" "&gt;"
+	"&" "&amp;"
+	} $content]
+	set ::tagsc "1"
+.txt.txt delete 1.0 end
+.txt.txt insert insert $escaped
+}
+
+set ptext [.txt.txt get 1.0 {end -1c}]
+set time [clock format [clock seconds] -format %G%m%dT%T]
+
+global mypost  
+set mypost "<?xml version=\"1.0\"?>
+<methodCall>
+<methodName>metaWeblog.newPost</methodName> 
+<params>
+<param><value><string>MyBlog</string></value></param>
+<param><value><string>$::cwpname</string></value></param> 
+<param><value><string>$::cwppass</string></value></param> 
+<param><struct>
+<member><name>categories</name><value><array><data><value>$::cats</value></data></array></value></member> 
+<member><name>description</name><value><string>$ptext</string></value></member> 
+<member><name>title</name><value><string>$::subject</string></value></member>
+</struct></param>
+<param><value><boolean>1</boolean></value></param> 
+</params> 
+</methodCall>"
+
+set plength [string length $ptext]
+set hconf [http::config -useragent "Xpostulate 0.2" ]
+set dopost [http::geturl $::cwpurl/xmlrpc.php -query $::mypost -type "text/xml" ]
+set wpstat [http::status $dopost]
+set wpresponse [http::data $dopost]
+
+toplevel .rsp 
+wm title .rsp "Post Status"
+
+frame .rsp.btns
+grid [tk::label .rsp.btns.lbl -text "Tony says: $wpstat\nPost length: $plength"]
+grid [tk::button .rsp.btns.view -text "View Journal" -command {
+    set bsu "$cwpurl"
+    exec $::brow $bsu &
+}]\
+[tk::button .rsp.btns.ok -text "DONE" -command {destroy .rsp}]
+
+frame .rsp.txt
+text .rsp.txt.t -width 80 -height 20
+.rsp.txt.t insert end $wpresponse
+
+pack .rsp.btns -in .rsp -side top -fill x
+pack .rsp.txt.t -in .rsp.txt -side top -fill x
+pack .rsp.txt -in .rsp -side top -fill x
+
+}
+
 
 #############################################################################
 # This program was written by Anthony Baldwin / http://baldwinsoftware.com/tonyb
