@@ -319,8 +319,7 @@ frame .lj1
 ###################
 tk::label .lj1.lbl1 -text "Post to:"
 tk::entry .lj1.uj -textvariable usej
-tk::label .lj1.oj -text "on:"
-tk::menubutton .lj1.post -text "Post to: " -menu .lj1.post.t
+tk::menubutton .lj1.post -text "on this site:" -menu .lj1.post.t
 
 # xml post menu
 ##############################
@@ -338,7 +337,7 @@ menu .lj1.post.t -tearoff 1
 pack .lj1 -in . -fill x
 pack .lj1.lbl1 -in .lj1 -side left
 pack .lj1.uj -in .lj1 -side left
-pack .lj1.oj -in .lj1 -side left
+# pack .lj1.oj -in .lj1 -side left
 pack .lj1.post -in .lj1 -side left
 
 # Here is the text widget
