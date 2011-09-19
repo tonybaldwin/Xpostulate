@@ -437,7 +437,7 @@ set filename [tk_getSaveFile -filetypes $::file_types]
 proc about {} {
 
 toplevel .about
-wm title .about "About eXpostulate"
+wm title .about "About Xpostulate"
 # tk_setPalette background $::wbg 
 
 tk::message .about.t -text "Xpostulate\n by Tony Baldwin\n tony@baldwinsoftware.com\n A x-posting blogging client written in tcl/tk\n Released under the GPL\n For more info see README, or\n http://www.baldwinsoftware.com/xpost.html\n" -width 280
