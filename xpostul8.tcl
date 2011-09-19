@@ -203,7 +203,7 @@ menu .fluff.bb.t -tearoff 1
 .fluff.bb.t add command -label "E-mail" -command {bmail}
 .fluff.bb.t add command -label "Friendika" -command {bfren}
 .fluff.bb.t add command -label "Youtube" -command {ytube}
-.fluff.bb.t add command -label "BlockQuote" -command {bquote}
+.fluff.bb.t add command -label "BlockQuote" -command {bbquote}
 .fluff.bb.t add command -label "CodeBlock" -command {bcode}
 .fluff.bb.t add command -label "Time Stamp" -command {indate}
 
@@ -956,7 +956,7 @@ proc ytube {} {
 .txt.txt insert insert "\[youtube\]INSERT VIDEO URL HERE\[/youtube\]"
 }
 
-proc bquote {} {
+proc bbquote {} {
 .txt.txt insert insert "\[quote\]INSERT QUOTED TEXT HERE\[/quote\]"
 }
 
