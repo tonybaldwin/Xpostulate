@@ -202,6 +202,7 @@ menu .fluff.bb.t -tearoff 1
 .fluff.bb.t add command -label "Image" -command {bimg}
 .fluff.bb.t add command -label "E-mail" -command {bmail}
 .fluff.bb.t add command -label "Friendika" -command {bfren}
+.fluff.bb.t add command -label "Xpostulate" -command {xpostin}
 .fluff.bb.t add command -label "Youtube" -command {ytube}
 .fluff.bb.t add command -label "BlockQuote" -command {bbquote}
 .fluff.bb.t add command -label "CodeBlock" -command {bcode}
@@ -951,6 +952,9 @@ proc bcode {} {
 .txt.txt insert insert "\[code\]INSERT CODE TEXT HERE\[/code\]"
 }
 
+proc xpostin {} {
+.txt.txt insert insert "Xpostul8"
+}
 proc ytube {} {
 .txt.txt insert insert "\[youtube\]INSERT VIDEO URL HERE\[/youtube\]"
 }
