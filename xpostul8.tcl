@@ -137,7 +137,7 @@ frame .fluff -bd 1 -relief raised
 
 tk::menubutton .fluff.mb -text File -menu .fluff.mb.f 
 tk::menubutton .fluff.ed -text Edit -menu .fluff.ed.t 
-tk::menubutton .fluff.ins -text Insert -menu .fluff.ins.t 
+tk::menubutton .fluff.ins -text HTML -menu .fluff.ins.t 
 tk::menubutton .fluff.bb -text BBcode -menu .fluff.bb.t
 tk::menubutton .fluff.view -text View -menu .fluff.view.t
 tk::label .fluff.font1 -text "Font size:" 
