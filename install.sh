@@ -16,10 +16,7 @@ echo "Please log in as root or sudo and try again."
 
 else
 
-# hdir=$(zenity --entry --hide-text --title "Installing eXp0stulate" --text "Enter non-root your username:")
-
-
-echo "Installing eXp0stulate..."
+echo "Installing Xpostulate..."
 
 echo "Enter your non-root username:"
 
@@ -51,8 +48,8 @@ chmod a+x ticklecal
 chmod a+x tcalcu
 
 echo "Installation complete!"
-echo "Thank you, $hdir, for using eXp0stulate"
-echo "To run eXp0stulate, in terminal type xpostul8, or make an icon/menu item/short cut to /usr/local/bin/xpostul8"
+echo "Thank you, $hdir, for using Xpostulate"
+echo "To run Xpostulate, in terminal type xpostul8, or make an icon/menu item/short cut to /usr/local/bin/xpostul8"
 echo "Enjoy!"
 
 fi
