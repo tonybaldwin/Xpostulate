@@ -27,6 +27,7 @@ echo "Creating config files..."
 
 mkdir /home/root/.xpost
 mkdir /home/$hdir/.xpost
+mv xpost-tiny.gif /home/$hdir/.xpost/
 chmod $hidr+rw /home/$hdir/.xpost
 cp xpost.conf /home/$hdir/.xpost
 cp xpost.conf /home/root/.xpost
