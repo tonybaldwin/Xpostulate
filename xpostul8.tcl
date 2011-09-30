@@ -11,6 +11,8 @@ package require base64
 
 uplevel #0 [list source ~/.xpost/xpost.conf]
 
+image  create  photo  xptiny -format GIF -file  ~/.xpost/xpost-tiny.gif
+
 #############################
 # I've been told that there are better ways to get stuff done
 # than using tonso global variables.
@@ -135,6 +137,7 @@ wm title . "Xpostulate - x-posting blog client"
 # menu bar buttons
 frame .fluff -bd 1 -relief raised
 
+tk::label .fluff.xpb -image xptiny
 tk::menubutton .fluff.mb -text File -menu .fluff.mb.f 
 tk::menubutton .fluff.ed -text Edit -menu .fluff.ed.t 
 tk::menubutton .fluff.ins -text HTML -menu .fluff.ins.t 
@@ -266,6 +269,7 @@ menu .fluff.view.t -tearoff 1
 # pack em in...
 ############################
 
+pack .fluff.xpb -in .fluff -side left
 pack .fluff.mb -in .fluff -side left
 pack .fluff.ed -in .fluff -side left
 pack .fluff.ins -in .fluff -side left
