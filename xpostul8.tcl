@@ -1504,7 +1504,7 @@ wm title .help "Xpostulate help"
 
 frame .help.bt
 grid [tk::button .help.bt.vt -text "RTFM" -command {
-set tlj "http://baldwinsoftware.com/wiki/pmwiki.php?n=Main.Xpostman"
+set tlj "http://tonybaldwin.me/hax/doku.php?id=xpostmanual" 
 exec $::brow $tlj &}]\
 [tk::button .help.bt.lj -text "LJ Xpost Comm" -command {
 set tlj "http://xpostulate.livejournal.com"
