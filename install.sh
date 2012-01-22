@@ -9,48 +9,28 @@
 
 name=$(whoami)
 
-if [ $name != "root" ]; then
-echo "You must be root or sudo to continue installation"
-echo "Please log in as root or sudo and try again."
-
-
+if [ $name != "$HOME/bin/" ]; then
+	mkdir $HOME/bin/
+	$PATH=$PATH:/$HOME/bin/
+	export PATH
 else
 
 echo "Installing Xpostulate..."
 
-echo "Enter your non-root username:"
-
-read hdir
-
-
 echo "Creating config files..."
 
-mkdir /home/root/.xpost
-mkdir /home/$hdir/.xpost
-mv xpost-tiny.gif /home/$hdir/.xpost/
-chmod $hidr+rw /home/$hdir/.xpost
-cp xpost.conf /home/$hdir/.xpost
-cp xpost.conf /home/root/.xpost
-chmod $hdir+rw /home/$hdir/.xpost/xpost.conf
+mkdir $HOME/.xpost
+mv xpost-tiny.gif $HOME/.xpost/
+cp xpost.conf $HOME/.xpost
 
 echo "Moving files"
 
-cp xpostul8.tcl /usr/local/bin/xpostul8
-cp tdict.tcl /usr/local/bin/tdict
-cp ticklecal /usr/local/bin/ticklecal
-cp tcalcu.tcl /usr/local/bin/tcalcu
-
-echo "Configuring permissions"
-
-cd /usr/local/bin
-chmod a+x xpostul8
-chmod a+x tdict
-chmod a+x ticklecal
-chmod a+x tcalcu
+cp xpostul8.tcl $HOME/bin/xpostul8
+chmod _x $HOME/bin/xpostul8
 
 echo "Installation complete!"
-echo "Thank you, $hdir, for using Xpostulate"
-echo "To run Xpostulate, in terminal type xpostul8, or make an icon/menu item/short cut to /usr/local/bin/xpostul8"
+echo "Thank you, $name, for using Xpostulate"
+echo "To run Xpostulate, in terminal type xpostul8, or make an icon/menu item/short cut to /home/$name/bin/xpostul8"
 echo "Enjoy!"
 
 fi

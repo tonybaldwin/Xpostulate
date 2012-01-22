@@ -2,7 +2,7 @@
 
 ##############################################
 # Xpostulate - crossposting blog client and social network dashboard
-# (c) tony baldwin / tony@baldwinsoftware.com / http://baldwinsoftware.com
+# (c) tony baldwin / tony@tonybaldwin.org / http://tonybaldwin.me
 # released according to the terms of the Gnu Public License, v. 3 or later
 # further licensing details at the end of the code.
 
@@ -204,7 +204,7 @@ menu .fluff.bb.t -tearoff 1
 .fluff.bb.t add command -label "Link" -command {bblink}
 .fluff.bb.t add command -label "Image" -command {bimg}
 .fluff.bb.t add command -label "E-mail" -command {bmail}
-.fluff.bb.t add command -label "Friendika" -command {bfren}
+.fluff.bb.t add command -label "Friendica" -command {bfren}
 .fluff.bb.t add command -label "Xpostulate" -command {xpostin}
 .fluff.bb.t add command -label "Youtube" -command {ytube}
 .fluff.bb.t add command -label "BlockQuote" -command {bbquote}
@@ -238,27 +238,10 @@ menu .fluff.view.t -tearoff 1
     exec $::brow http://$::tbname.tumblr.com &
     }
 
-.fluff.view.t add command -label "LiveJournal.com" -command {
-    exec $::brow http://www.livejournal.com &
-    }
-.fluff.view.t add command -label "InsaneJournal.com" -command {
-    exec $::brow http://www.insanejournal.com &
-    }
-.fluff.view.t add command -label "DreamWidth.com" -command {
-    exec $::brow http://www.dreamwidth.com &
-    }
-    .fluff.view.t add command -label "Deadjournal.com" -command {
-    exec $::brow "http://www.deadjournal.com" &
-}
-    
-.fluff.view.t add command -label "Tumblr.com" -command {
-    exec $::brow http://www.tumblr.com &
-    }
-
-.fluff.view.t add command -label "Custom WP  Blog" -command {
+.fluff.view.t add command -label "Custom WP" -command {
     exec $::brow $::cwpurl &
     }
-.fluff.view.t add command -label "Friendika" -command {
+.fluff.view.t add command -label "Friendica" -command {
 	exec $::brow $::furl &
 }
 .fluff.view.t add command -label "StatusNet" -command {
@@ -337,7 +320,7 @@ menu .lj1.post.t -tearoff 1
 .lj1.post.t add command -label WordPress -command wppost
 .lj1.post.t add command -label CustomWP -command cwpost
 .lj1.post.t add command -label Tumblr -command tbpost
-.lj1.post.t add command -label Friendika -command fpost
+.lj1.post.t add command -label Friendica -command fpost
 
 pack .lj1 -in . -fill x
 pack .lj1.lbl1 -in .lj1 -side left
@@ -374,9 +357,14 @@ frame .dt
 
 grid [tk::label .dt.ol -text "StatusNet:"]\
 [tk::entry .dt.ent -width 70 -textvariable udate]\
-[tk::button .dt.tw -text "StatusNet" -command "snet"]\
+[tk::button .dt.tw -text "Post" -command "snet"]\
+[tk::button .dt.tc -text "Clear" -command "sud"]\
 [tk::button .dt.qt -text "Quit" -command {exit}]
 pack .dt -in . -fill x
+
+proc sud {} {
+	set ::udate " "
+}
 
 ###
 # font size, affects size of font in editor, not in post
@@ -445,7 +433,7 @@ toplevel .about
 wm title .about "About Xpostulate"
 # tk_setPalette background $::wbg 
 
-tk::message .about.t -text "Xpostulate\n by Tony Baldwin\n tony@baldwinsoftware.com\n A x-posting blogging client written in tcl/tk\n Released under the GPL\n For more info see README, or\n http://www.baldwinsoftware.com/xpost.html\n" -width 280
+tk::message .about.t -text "Xpostulate\n by Tony Baldwin\n http://tonybaldwin.me\n A x-posting blogging client written in tcl/tk\n Released under the GPL\n For more info see README, or\n http://tonyb.us/xpost\n" -width 280
 tk::button .about.o -text "Okay" -command {destroy .about} 
 pack .about.t -in .about -side top
 pack .about.o -in .about -side top
@@ -1229,14 +1217,14 @@ grid [tk::label .pref.tbn -text "Tb blogname:"]\
 grid [tk::label .pref.tube -text "Tumblr e-mail:"]\
 [tk::entry .pref.tubular -textvariable tube]
 
-grid [tk::label .pref.b1o -text "Friendika:"]
+grid [tk::label .pref.b1o -text "Friendica:"]
 
 grid [tk::label .pref.b1un -text "Username:"]\
 [tk::entry .pref.b1nome -textvariable fname]\
 [tk::label .pref.b1p -text "password:"]\
 [tk::entry .pref.b1pw -show * -textvariable fpwrd]
 
-grid [tk::label .pref.b1n -text "Friendika Server:"]\
+grid [tk::label .pref.b1n -text "Friendica Server:"]\
 [tk::entry .pref.b1nm -text furl]\
 
 grid [tk::button .pref.sv -text "Save Preferences" -command sapro]\
@@ -1554,7 +1542,7 @@ proc snet {} {
 		set myquery [::http::formatQuery "status" "$::udate" "source" "Xpostulate"]
 		set myauth [list "Authorization" "Basic $auth64"]
 		# puts "http::geturl $::serv -headers $myauth -query $myquery"
-		set token [::http::geturl http://parlementum.net/api/statuses/update.xml -headers $myauth -query $myquery]
+		set token [::http::geturl $surl/api/statuses/update.xml -headers $myauth -query $myquery]
 		}
 }
 
@@ -1802,7 +1790,7 @@ pack .rsp.txt -in .rsp -side top -fill x
 
 
 #############################################################################
-# This program was written by Anthony Baldwin / http://baldwinsoftware.com/tonyb
+# This program was written by Anthony Baldwin / http://tonybaldwin.me
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or

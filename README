@@ -4,15 +4,15 @@
 # version 0.2.1
   
 Xpostulate was created by Anthony Baldwin
-tony@baldwinsoftware.com
+tony@tonybaldwin.org
 who uses Xpostulate to post to:
-http://baldwinsoftware.com/blog
+http://tonybaldwin.me/blog/
 http://tonybaldwin.wordpress.com/
 http://tonybaldwin.tumblr.com
 http://tonytraductor.livejournal.com
 http://tonybaldwin.insanejournal.com
 http://tonybaldwin.dreamwidth.org
-http://friendika.parlementum.net/profile/tonybaldwin
+http://frndk.de/profile/tony
 
 ----
 DEPENDENCIES:
@@ -44,12 +44,14 @@ but no installers have been built (install from sources).
 ----
 MANUAL
 
-There is a manual here: http://baldwinsoftware.com/wiki/pmwiki.php?n=Xpost.Manual
-There are user communities on LJ and DW
+There is a manual here: http://tonybaldwin.me/hax/doku.php?id=xpostmanual
+There are user communities on LJ and DW at
+http://xpostulate.livejournal.com and 
+http://xpostulate.dreamwidth.org
 
 # changelog for v 0.2.1
 # #############
-SUPPORT FOR FRIENDIKA POSTING WITH BBCODE INSERTIONS!!!
+SUPPORT FOR FRIENDICA POSTING WITH BBCODE INSERTIONS!!!
 Removed twitter (needs work...anybody want to help me with oauth?)
 Changed identi.ca to any status.net
 Removed iziblog, scribbld, and inksome...sorry...
