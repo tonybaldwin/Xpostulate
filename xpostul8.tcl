@@ -1517,7 +1517,7 @@ exec $::brow $tlj &}]\
 frame .help.t
 
 text .help.t.inf -width 80 -height 10
-.help.t.inf insert end "Xpostulate, a FREE and ticklish cross-posting blogging client.\nThere is a manual and further info at http://baldwinsoftware.com/xpost.html\nClicking the RTFM button above will open the manual in your browser.\nFor additional support, join \nhttp://xpostulate.livejournal.com, http://xpostulate.dreamwidth.org\nor the http://baldwinsoftware.com/forum \nwhich can all be accessed by clicking the above buttons\n\nTony Baldwin tony@baldwinsoftware.com"
+.help.t.inf insert end "Xpostulate, a FREE and ticklish cross-posting blogging client.\nThere is a manual and further info at http://tonyb.us/xpost\nClicking the RTFM button above will open the manual in your browser.\nFor additional support, join \nhttp://xpostulate.livejournal.com, http://xpostulate.dreamwidth.org\nwhich can be accessed by clicking the above buttons\n\nTony Baldwin tony@tonybaldwin.org"
 
 pack .help.bt -in .help -side top
 pack .help.t -in .help -side top
